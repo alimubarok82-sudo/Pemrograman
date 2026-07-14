@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROGRAMMING LAB XI</title>
+    <style>
+        :root {
+            /* Warna Utama */
+            --primary: #2563eb;
+            --secondary: #06b6d4;
+            --accent: #8b5cf6;
+            --bg: #020617;
+            --bg-darker: #020617;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            /* Glassmorphism Variables */
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden; /* App-like feel, disable body scroll */
+        }
+
+        /* Ambient Glow Background layer */
+        .ambient-glow { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -2; pointer-events: none; }
+        .glow-1 { top: -10%; left: -10%; width: 500px; height: 500px; background: rgba(37, 99, 235, 0.2); }
+        .glow-2 { bottom: -10%; right: -10%; width: 500px; height: 500px; background: rgba(147, 51, 234, 0.2); }
+        .glow-3 { top: 20%; right: 10%; width: 300px; height: 300px; background: rgba(6, 182, 212, 0.1); filter: blur(100px); }
+
+        /* Particle Background layer */
+        #particles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: transparent;
+        }
+
+        /* Layout Container */
+        .app-container { display: flex; height: 100vh; width: 100vw; }
+        
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            z-index: 10;
+        }
+        
+        .logo {
+            padding: 0 20px 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(to right, var(--text), var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 10px;
+        }
+
+        .menu-list { overflow-y: auto; flex: 1; padding: 0 10px; }
+        
+        .menu-item {
+            padding: 12px 16px;
+            margin: 0 6px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .menu-item:hover {
+            color: white;
+        }
+
+        .menu-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            scroll-behavior: smooth;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--glass-border); padding: 10px 0; }
+            .menu-list { display: flex; overflow-x: auto; padding-bottom: 5px; }
+            .menu-item { white-space: nowrap; margin-bottom: 0; margin-right: 5px; }
+            .main-content { padding: 20px; }
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; }
+        }
+
+        /* Sections (Views) */
+        .section { display: none; animation: slideUp 0.5s ease forwards; opacity: 0; transform: translateY(20px); }
+        .section.active { display: block; }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* Typography */
+        h1, h2, h3 { margin-bottom: 1rem; color: var(--text); }
+        h1 { font-size: 2.2rem; background: linear-gradient(to right, var(--text), var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; }
+        p { margin-bottom: 1rem; color: var(--text-muted); }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 24px;
+            transition: transform 0.3s;
+        }
+        .glass-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+
+        /* Buttons */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+        }
+        .btn:hover { background: #3b82f6; box-shadow: 0 10px 20px -3px rgba(37, 99, 235, 0.4); transform: translateY(-1px); }
+        
+        /* Ripple effect */
+        .ripple {
+            position: absolute; border-radius: 50%; transform: scale(0);
+            animation: ripple-anim 0.6s linear; background: rgba(255,255,255,0.3);
+        }
+        @keyframes ripple-anim { to { transform: scale(4); opacity: 0; } }
+
+        /* Grid Utilities */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .text-center { text-align: center; }
+        .cursor-pointer { cursor: pointer; }
+
+        /* Form Inputs */
+        input, select, textarea {
+            width: 100%; padding: 10px; margin-bottom: 15px;
+            background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);
+            color: white; border-radius: 8px; outline: none; transition: border 0.3s;
+            font-family: inherit;
+        }
+        input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; gap:5px; padding: 6px 14px; border-radius: 12px; font-size: 0.8rem; font-weight: 500; background: var(--glass-bg); border: 1px solid var(--glass-border); margin: 5px; opacity: 0.5; filter: grayscale(1); transition: all 0.3s; }
+        .badge.earned { opacity: 1; filter: grayscale(0); background: rgba(255, 255, 255, 0.1); border-color: rgba(255,255,255,0.2); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+
+        /* Code Editor */
+        .editor-container { display: flex; gap: 20px; height: 350px; flex-wrap: wrap;}
+        .editor, .console {
+            flex: 1; background: #1e1e1e; border-radius: 8px; padding: 15px; font-family: monospace; color: #d4d4d4;
+            border: 1px solid var(--glass-border); min-width: 300px;
+            display: flex; flex-direction: column;
+        }
+        .console { overflow-y: auto; }
+        .editor textarea { width: 100%; flex: 1; background: transparent; border: none; color: inherit; font-family: inherit; resize: none; margin: 0; outline: none; overflow-y: auto;}
+        
+        /* Progress Bar */
+        .progress-bg { background: rgba(30, 41, 59, 1); height: 8px; border-radius: 5px; margin: 20px 0; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, var(--primary), var(--accent)); height: 100%; width: 0%; transition: width 1s ease; }
+
+        /* Triangle Visualizer */
+        .triangle-box {
+            width: 200px; height: 200px; position: relative; margin: 20px auto;
+            border-bottom: 2px solid var(--glass-border);
+            display: flex; justify-content: center; align-items: flex-end;
+        }
+        .triangle {
+            width: 0; height: 0;
+            border-left: 50px solid transparent; border-right: 50px solid transparent; border-bottom: 100px solid var(--secondary);
+            transition: all 0.5s;
+        }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%);
+            background: var(--success); color: white; padding: 12px 25px; border-radius: 30px;
+            transition: bottom 0.3s; z-index: 1000; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Confetti Effect */
+        .confetti { position: absolute; width: 10px; height: 10px; z-index: 999; }
+        
+        /* Drag Drop Builder */
+        .builder-area { min-height: 200px; border: 2px dashed var(--glass-border); padding: 10px; display: flex; flex-direction: column; gap: 10px; border-radius: 8px;}
+        .draggable-item { background: var(--primary); padding: 10px; border-radius: 5px; cursor: pointer; text-align: center; font-weight: bold; transition: transform 0.2s; }
+        .draggable-item:hover { transform: scale(1.02); }
+
+        /* Animations */
+        .typing::after { content: '|'; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        .timeline-step { display: flex; align-items: flex-start; margin-bottom: 25px; opacity: 0; transition: opacity 0.5s; }
+        .timeline-step.visible { opacity: 1; }
+        .timeline-dot { width: 24px; height: 24px; border-radius: 50%; background: var(--secondary); margin-right: 20px; box-shadow: 0 0 10px var(--secondary); margin-top: 5px; flex-shrink: 0;}
+        
+    </style>
+</head>
+<body>
+    <!-- Background Effect -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+    <canvas id="particles"></canvas>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">🚀 ProgLab XI</div>
+            <div style="padding: 0 20px;">
+                <div style="display:flex; justify-content:space-between; font-size: 0.8rem; color:var(--text-muted)"><span>Progress</span><span id="nav-pct">0%</span></div>
+                <div class="progress-bg" style="margin: 5px 0 20px; height: 6px;"><div class="progress-fill" id="nav-progress"></div></div>
+            </div>
+            <div class="menu-list" id="menu-container">
+                <!-- Menu populated by JS -->
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="content-container">
+            <!-- Sections injected via JS -->
+        </main>
+    </div>
+
+    <!-- Toast Component -->
+    <div id="toast">Notifikasi</div>
+
+    <script>
+        /**
+         * PROGRAMMING LAB XI - INTERACTIVE LOGIC
+         * Dibangun menggunakan HTML, CSS, & JS Murni
+         */
+
+        // --- 1. STATE MANAGEMENT ---
+        const state = {
+            currentSection: 'dashboard',
+            progress: 0,
+            badges: [],
+            completedSections: new Set(),
+            score: 0
+        };
+
+        const menus = [
+            { id: 'dashboard', icon: '🏠', title: 'Dashboard' },
+            { id: 'materi1', icon: '📖', title: 'Proses Pemrograman' },
+            { id: 'materi2', icon: '⚡', title: 'Langkah Pemrograman' },
+            { id: 'materi3', icon: '🔄', title: 'Siklus Pemrograman' },
+            { id: 'kasus', icon: '🎯', title: 'Contoh Kasus' },
+            { id: 'simulasi', icon: '🧠', title: 'Simulasi Analisis' },
+            { id: 'flowchart', icon: '🔀', title: 'Flowchart Builder' },
+            { id: 'pseudocode', icon: '📝', title: 'Pseudocode Builder' },
+            { id: 'coding', icon: '💻', title: 'Coding Lab' },
+            { id: 'simulator', icon: '▶️', title: 'Simulator Program' },
+            { id: 'testing', icon: '🧪', title: 'Testing Lab' },
+            { id: 'debug', icon: '🐛', title: 'Debugging Game' },
+            { id: 'quiz', icon: '❓', title: 'Quiz' },
+            { id: 'project', icon: '🛠️', title: 'Mini Project' },
+            { id: 'sertifikat', icon: '🎓', title: 'Sertifikat' }
+        ];
+
+        const badgesDef = [
+            { id: 'pemula', name: 'Pemula', icon: '🌱' },
+            { id: 'logic', name: 'Logic Master', icon: '🧠' },
+            { id: 'flowchart', name: 'Flowchart Master', icon: '🔀' },
+            { id: 'debug', name: 'Debug Master', icon: '🐛' },
+            { id: 'coding', name: 'Coding Master', icon: '💻' }
+        ];
+
+        // --- 2. CORE SYSTEM FUNCTIONS ---
+        
+        function initApp() {
+            renderMenu();
+            renderSections();
+            setupParticles();
+            addRippleEffect();
+            navigateTo('dashboard');
+        }
+
+        function renderMenu() {
+            const container = document.getElementById('menu-container');
+            container.innerHTML = menus.map(m => `
+                <div class="menu-item" onclick="navigateTo('${m.id}')" id="menu-${m.id}">
+                    <span>${m.icon}</span> ${m.title}
+                </div>
+            `).join('');
+        }
+
+        function navigateTo(id) {
+            // Update Active Menu
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+            const menuEl = document.getElementById(`menu-${id}`);
+            if(menuEl) menuEl.classList.add('active');
+            
+            // Switch Sections
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            const sec = document.getElementById(`sec-${id}`);
+            if(sec) sec.classList.add('active');
+            
+            state.currentSection = id;
+            state.completedSections.add(id);
+            updateProgress();
+
+            // Run specific lifecycle hooks
+            if(id === 'dashboard') updateDashboard();
+            if(id === 'sertifikat') checkSertifikat();
+        }
+
+        function updateProgress() {
+            const pct = Math.floor((state.completedSections.size / menus.length) * 100);
+            state.progress = pct;
+            document.getElementById('nav-progress').style.width = `${pct}%`;
+            document.getElementById('nav-pct').innerText = `${pct}%`;
+            
+            if(pct > 10) awardBadge('pemula');
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.background = isError ? 'var(--danger)' : 'var(--success)';
+            toast.style.bottom = '20px';
+            setTimeout(() => { toast.style.bottom = '-60px'; }, 3000);
+        }
+
+        function awardBadge(id) {
+            if(!state.badges.includes(id)) {
+                state.badges.push(id);
+                showToast(`🏆 Badge Baru Diperoleh: ${badgesDef.find(b=>b.id===id).name}`);
+                fireConfetti();
+                updateDashboard();
+            }
+        }
+
+        // --- 4. STEP DETAILS INTERACTION (MATERI 2) ---
+        function showStepDetail(stepNum) {
+            const container = document.getElementById('step-details-container');
+            const steps = {
+                1: {
+                    title: "1. Menganalisis Permasalahan (Analyzing) 🔍",
+                    color: "var(--secondary)",
+                    content: `
+                        <p>Tahap memahami kebutuhan untuk menghasilkan definisi masalah yang perlu diselesaikan.</p>
+                        <div class="grid-2">
+                            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                                <h3 style="font-size: 1rem; color: var(--secondary);">Berpikir Komputasional:</h3>
+                                <ul style="margin-left: 20px; font-size: 0.85rem; color: var(--text-muted);">
+                                    <li><b>Dekomposisi:</b> Memecah masalah besar menjadi sub-masalah kecil.</li>
+                                    <li><b>Abstraksi:</b> Fokus pada informasi penting, abaikan yang tidak relevan.</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                                <h3 style="font-size: 1rem; color: var(--secondary);">Output Analisis:</h3>
+                                <p style="font-size: 0.85rem; margin-bottom: 10px;">Pernyataan masalah yang menjelaskan <b>Input</b>, <b>Output</b>, dan <b>Constraint</b>.</p>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.1); pt: 10px;">
+                                    <p style="margin-bottom: 5px;">📥 <b>Input:</b> Data yang masuk ke program untuk diolah.</p>
+                                    <p style="margin-bottom: 5px;">📤 <b>Output:</b> Hasil akhir yang dikeluarkan program.</p>
+                                    <p style="margin-bottom: 0;">🛑 <b>Constraint:</b> Batasan atau aturan yang harus ditaati program.</p>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                },
+                2: {
+                    title: "2. Mendesain Solusi (Problem Solving) 📐",
+                    color: "var(--accent)",
+                    content: `
+                        <p>Merencanakan strategi untuk menghasilkan keluaran berdasarkan masukan yang diterima.</p>
+                        <div class="grid-2">
+                            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                                <h3 style="font-size: 1rem; color: var(--accent);">Metode Desain:</h3>
+                                <ul style="margin-left: 20px; font-size: 0.85rem; color: var(--text-muted);">
+                                    <li><b>Algoritma:</b> Urutan langkah logis.</li>
+                                    <li><b>Flowchart/Pseudocode:</b> Representasi visual atau narasi algoritma.</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                                <h3 style="font-size: 1rem; color: var(--accent);">Evaluasi:</h3>
+                                <p style="font-size: 0.85rem;">Memastikan program bekerja cepat (kurang dari 1 detik) saat diberikan masukan besar.</p>
+                            </div>
+                        </div>
+                    `
+                },
+                3: {
+                    title: "3. Implementasi (Coding) 💻",
+                    color: "var(--primary)",
+                    content: `
+                        <p>Menulis kode program berdasarkan algoritma yang telah dirancang menggunakan bahasa pemrograman tertentu.</p>
+                        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                            <h3 style="font-size: 1rem; color: var(--primary);">Pertimbangan Teknis:</h3>
+                            <ul style="margin-left: 20px; font-size: 0.85rem; color: var(--text-muted);">
+                                <li>Pemilihan tipe data yang tepat.</li>
+                                <li>Struktur kontrol yang digunakan (Looping, Branching).</li>
+                                <li>Penggunaan pustaka (Library) atau kode yang sudah ada.</li>
+                            </ul>
+                        </div>
+                    `
+                },
+                4: {
+                    title: "4. Menguji Program (Testing) 🧪",
+                    color: "var(--success)",
+                    content: `
+                        <p>Menguji kebenaran program untuk memastikan program berjalan benar sesuai batasan yang diberikan.</p>
+                        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                            <h3 style="font-size: 1rem; color: var(--success);">Strategi Pengujian:</h3>
+                            <ul style="margin-left: 20px; font-size: 0.85rem; color: var(--text-muted);">
+                                <li><b>Test Case (Kasus Uji):</b> Menggunakan pasangan data masukan dan keluaran yang diharapkan.</li>
+                                <li><b>Analisis Kembali:</b> Jika ditemukan kesalahan, lakukan analisis ulang pada tahap 1.</li>
+                            </ul>
+                        </div>
+                    `
+                }
+            };
+
+            const step = steps[stepNum];
+            container.innerHTML = `
+                <div class="glass-card animate-fade">
+                    <h2 style="color:${step.color}">${step.title}</h2>
+                    ${step.content}
+                </div>
+            `;
+        }
+
+        // --- 5. UI RENDERER ---
+        function renderSections() {
+            const container = document.getElementById('content-container');
+            let html = '';
+
+            /* --- DASHBOARD --- */
+            html += `
+            <div id="sec-dashboard" class="section">
+                <h1>Selamat Datang Programmer! 🚀</h1>
+                <p class="typing">Mari belajar proses pemrograman secara interaktif...</p>
+                
+                <div class="grid-3" style="margin-top:30px">
+                    <div class="glass-card text-center">
+                        <h3>Progress Belajar</h3>
+                        <div class="progress-bg"><div class="progress-fill" id="dash-prog-fill" style="width:0%"></div></div>
+                        <h2 id="dash-prog-text">0%</h2>
+                        <p style="font-size:0.8rem">Materi Selesai</p>
+                    </div>
+                    <div class="glass-card text-center">
+                        <h3>Total Skor</h3>
+                        <h2 id="dash-score" style="font-size: 3rem; color: var(--secondary)">0</h2>
+                        <p style="font-size:0.8rem">XP Point</p>
+                    </div>
+                    <div class="glass-card">
+                        <h3>Koleksi Badge</h3>
+                        <div id="dash-badges" style="display:flex; flex-wrap:wrap; gap:5px; justify-content:center;">
+                            ${badgesDef.map(b => `<span class="badge" id="badge-${b.id}">${b.icon} ${b.name}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card text-center" style="padding: 40px;">
+                    <div style="font-size: 5rem; margin-bottom: 20px;">👨‍💻</div>
+                    <h2>Siap Menjadi Programmer Handal?</h2>
+                    <br>
+                    <button class="btn ripple-btn" onclick="navigateTo('materi1')" style="font-size: 1.2rem; padding: 15px 40px;">Mulai Belajar ➡️</button>
+                </div>
+            </div>`;
+
+            /* --- MATERI 1: PROSES PEMROGRAMAN --- */
+            html += `
+            <div id="sec-materi1" class="section">
+                <h1>Apa itu Pemrograman? 🤔</h1>
+                <div class="glass-card">
+                    <p>Pemrograman bukan sekadar mengetik kode. Pemrograman adalah <strong>proses menyelesaikan masalah</strong> dengan memberikan instruksi yang logis kepada komputer.</p>
+                    <div class="grid-3" style="margin: 40px 0; gap: 40px;">
+                        <div class="text-center glass-card">
+                            <h3>1. Masalah</h3>
+                            <div style="font-size:4rem; margin:10px 0;">🌍</div>
+                            <p style="font-size:0.9rem">Dunia nyata punya masalah yang perlu dipecahkan.</p>
+                        </div>
+                        <div class="text-center glass-card" style="border-color: var(--primary)">
+                            <h3>2. Otak Programmer</h3>
+                            <div style="font-size:4rem; margin:10px 0;">🧠</div>
+                            <p style="font-size:0.9rem">Menganalisis dan memikirkan logika penyelesaian.</p>
+                        </div>
+                        <div class="text-center glass-card">
+                            <h3>3. Solusi Digital</h3>
+                            <div style="font-size:4rem; margin:10px 0;">💻</div>
+                            <p style="font-size:0.9rem">Aplikasi / Software yang bisa digunakan.</p>
+                        </div>
+                    </div>
+                    <button class="btn ripple-btn" onclick="navigateTo('materi2')">Lanjut: Langkah Pemrograman</button>
+                </div>
+            </div>`;
+
+            /* --- MATERI 2: LANGKAH PEMROGRAMAN --- */
+            html += `
+            <div id="sec-materi2" class="section">
+                <h1>4 Langkah Utama Pemrograman 🛠️</h1>
+                <div class="glass-card" style="margin-bottom: 20px; border-left: 4px solid var(--primary);">
+                    <p style="font-size: 0.95rem; margin-bottom: 0;">Menurut buku <i>Oxford Dictionary of Computer Science</i>, pemrograman adalah seluruh aktivitas teknis untuk menghasilkan program, mulai dari analisis hingga implementasi.</p>
+                </div>
+
+                <!-- Interactive Step Selector -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px;">
+                    <button class="btn" style="flex: 1; min-width: 150px; background: var(--secondary);" onclick="showStepDetail(1)">1. Analisis</button>
+                    <button class="btn" style="flex: 1; min-width: 150px; background: var(--accent);" onclick="showStepDetail(2)">2. Desain</button>
+                    <button class="btn" style="flex: 1; min-width: 150px; background: var(--primary);" onclick="showStepDetail(3)">3. Coding</button>
+                    <button class="btn" style="flex: 1; min-width: 150px; background: var(--success);" onclick="showStepDetail(4)">4. Testing</button>
+                </div>
+
+                <!-- Step Content Area -->
+                <div id="step-details-container">
+                    <!-- Default State: Step 1 -->
+                    <div id="step-1" class="glass-card animate-fade">
+                        <h2 style="color:var(--secondary)">1. Menganalisis Permasalahan (Analyzing) 🔍</h2>
+                        <p>Tahap awal di mana programmer memahami kebutuhan atau keadaan saat ini untuk menghasilkan definisi masalah.</p>
+                        <div class="grid-2">
+                            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                                <h3 style="font-size: 1rem; color: var(--secondary);">Berpikir Komputasional:</h3>
+                                <ul style="margin-left: 20px; font-size: 0.85rem; color: var(--text-muted);">
+                                    <li><b>Dekomposisi:</b> Memecah masalah kompleks menjadi sub-masalah kecil yang saling berkaitan.</li>
+                                    <li><b>Abstraksi:</b> Mencari inti masalah dari permasalahan yang akan diselesaikan.</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                                <h3 style="font-size: 1rem; color: var(--secondary);">Hasil Analisis:</h3>
+                                <ul style="margin-left: 20px; font-size: 0.85rem; color: var(--text-muted);">
+                                    <li><b>Input:</b> Masukan data ke program.</li>
+                                    <li><b>Output:</b> Keluaran/hasil yang diinginkan.</li>
+                                    <li><b>Constraint:</b> Batasan-batasan program.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SDLC Diagram Flow (Matching LKS Image) -->
+                <div class="glass-card" style="text-align: center; background: rgba(0,0,0,0.3);">
+                    <h3 style="font-size: 1rem;">Siklus Pemrograman Dasar:</h3>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                        <div style="padding: 5px 15px; border: 1px solid var(--glass-border); border-radius: 5px; font-size: 0.75rem;">Mulai</div>
+                        <span>➡️</span>
+                        <div style="padding: 5px 15px; background: var(--secondary); border-radius: 5px; font-size: 0.75rem; color: white;">Analisis</div>
+                        <span>➡️</span>
+                        <div style="padding: 5px 15px; background: var(--accent); border-radius: 5px; font-size: 0.75rem; color: white;">Desain</div>
+                        <span>➡️</span>
+                        <div style="padding: 5px 15px; background: var(--primary); border-radius: 5px; font-size: 0.75rem; color: white;">Coding</div>
+                        <span>➡️</span>
+                        <div style="padding: 5px 15px; background: var(--success); border-radius: 5px; font-size: 0.75rem; color: white;">Testing</div>
+                        <span>➡️</span>
+                        <div style="padding: 5px 15px; border: 1px solid var(--glass-border); border-radius: 5px; font-size: 0.75rem;">Selesai</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <button class="btn ripple-btn" onclick="navigateTo('materi1')">⬅️ Kembali</button>
+                    <button class="btn ripple-btn" onclick="navigateTo('materi3')">Lanjut: Siklus Pemrograman ➡️</button>
+                </div>
+            </div>`;
+
+            /* --- MATERI 3: SIKLUS PEMROGRAMAN --- */
+            html += `
+            <div id="sec-materi3" class="section">
+                <h1>Siklus Hidup Pemrograman 🔄</h1>
+                <div class="glass-card">
+                    <p>Program tidak dibuat sekali jadi. Ia mengalami perbaikan terus-menerus mengikuti kebutuhan pengguna. Mari kita lihat contoh <b>Aplikasi Prediksi Hutan Indonesia</b>:</p>
+                    
+                    <div style="margin-top: 30px;">
+                        <!-- Versi 1 -->
+                        <div class="glass-card" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1); padding: 15px; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <div style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">VERSI 1</div>
+                                <h3 style="margin-bottom: 0; font-size: 1rem;">Olah Data Tabular</h3>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: var(--text-muted);">
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Analisis</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Desain</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Implementasi</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Pengujian</span>
+                            </div>
+                            <p style="margin-top: 10px; font-size: 0.85rem; margin-bottom: 0;">Program awal mampu membaca dan mengolah data hutan dalam bentuk tabel.</p>
+                        </div>
+
+                        <!-- Versi 2 -->
+                        <div class="glass-card" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1); padding: 15px; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <div style="background: var(--secondary); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">VERSI 2</div>
+                                <h3 style="margin-bottom: 0; font-size: 1rem;">Visualisasi Grafik</h3>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: var(--text-muted);">
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Analisis</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Desain</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Implementasi</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Pengujian</span>
+                            </div>
+                            <p style="margin-top: 10px; font-size: 0.85rem; margin-bottom: 0;">Program ditambahkan fitur untuk menampilkan analisis data dalam bentuk <b>grafik batang</b>.</p>
+                        </div>
+
+                        <!-- Versi 3 -->
+                        <div class="glass-card" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1); padding: 15px; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <div style="background: var(--accent); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">VERSI 3</div>
+                                <h3 style="margin-bottom: 0; font-size: 1rem;">Visualisasi Peta</h3>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: var(--text-muted);">
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Analisis</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Desain</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Implementasi</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Pengujian</span>
+                            </div>
+                            <p style="margin-top: 10px; font-size: 0.85rem; margin-bottom: 0;">Program kini mampu menampilkan data dalam bentuk <b>visualisasi peta</b> interaktif.</p>
+                        </div>
+
+                        <!-- Versi 4 -->
+                        <div class="glass-card" style="background: rgba(6, 182, 212, 0.1); border-color: var(--secondary); padding: 15px; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <div style="background: var(--success); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">VERSI 4</div>
+                                <h3 style="margin-bottom: 0; font-size: 1rem; color: var(--secondary);">Prediksi AI</h3>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: var(--text-muted);">
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Analisis</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Desain</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Implementasi</span> ➔
+                                <span style="padding: 3px 8px; border: 1px solid var(--glass-border); border-radius: 4px;">Pengujian</span>
+                            </div>
+                            <p style="margin-top: 10px; font-size: 0.85rem; margin-bottom: 0;">Puncak evolusi: Program mampu melakukan <b>prediksi keadaan hutan</b> Indonesia di atas peta.</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px; padding: 15px; background: rgba(37, 99, 235, 0.1); border-radius: 12px; border: 1px solid var(--primary);">
+                        <p style="font-size: 0.9rem; margin-bottom: 0;">💡 <b>Kesimpulan:</b> Siklus ini membuat program tetap relevan dengan kebutuhan pengguna yang terus berubah.</p>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <button class="btn ripple-btn" onclick="navigateTo('materi2')">⬅️ Kembali</button>
+                    <button class="btn ripple-btn" onclick="navigateTo('kasus')">Lanjut: Contoh Kasus ➡️</button>
+                </div>
+            </div>`;
+
+            /* --- CONTOH KASUS --- */
+            html += `
+            <div id="sec-kasus" class="section">
+                <h1>Contoh Kasus: Identifikasi Segitiga 📐</h1>
+                <div class="glass-card">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; background: rgba(37, 99, 235, 0.1); padding: 15px; border-radius: 12px; border: 1px solid var(--primary);">
+                        <div style="font-size: 2.5rem;">🎯</div>
+                        <div>
+                            <h3 style="margin-bottom: 5px; color: var(--primary);">Tujuan Pembelajaran</h3>
+                            <p style="margin-bottom: 0; font-size: 0.95rem;">Memahami bagaimana sebuah masalah nyata (geometri) diubah menjadi algoritma pemrograman yang logis.</p>
+                        </div>
+                    </div>
+
+                    <h2>1. Deskripsi Masalah</h2>
+                    <p>Kita diminta membuat program untuk mengecek 3 buah angka yang dimasukkan pengguna (sisi a, b, dan c). Program harus pintar untuk menentukan apakah itu segitiga <strong>Sama Sisi</strong>, <strong>Sama Kaki</strong>, <strong>Sembarang</strong>, atau bahkan <strong>Bukan Segitiga</strong> sama sekali.</p>
+                    
+                    <div class="grid-2" style="margin-top: 30px;">
+                        <div class="glass-card" style="margin-bottom: 0;">
+                            <h3 style="color:var(--secondary)">Tahap 1: Analisis Syarat (Constraint)</h3>
+                            <p>Tidak semua 3 angka bisa jadi segitiga! Ada aturan matematika yang disebut <b>Teorema Pertidaksamaan Segitiga</b>:</p>
+                            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-family: monospace; border-left: 4px solid var(--secondary);">
+                                (a + b > c) DAN (a + c > b) DAN (b + c > a)
+                            </div>
+                            <p style="margin-top: 10px; font-size: 0.85rem;">Artinya: Jumlah dua sisi mana pun HARUS lebih besar dari sisi sisanya. Jika ada satu saja yang melanggar, maka garis-garis tersebut tidak akan pernah bertemu untuk membentuk segitiga.</p>
+                        </div>
+                        <div class="glass-card" style="margin-bottom: 0;">
+                            <h3 style="color:var(--accent)">Tahap 2: Klasifikasi Jenis</h3>
+                            <p>Jika sudah terbukti segitiga, baru kita cek jenisnya menggunakan logika perbandingan:</p>
+                            <ul style="margin-left: 20px; font-size: 0.9rem; color: var(--text-muted);">
+                                <li><b>Sama Sisi:</b> Jika semua sisi sama panjang (a = b = c).</li>
+                                <li><b>Sama Kaki:</b> Jika hanya ada 2 sisi yang sama panjang (a = b atau b = c atau a = c).</li>
+                                <li><b>Sembarang:</b> Jika tidak ada satu pun sisi yang sama panjang.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px;">
+                        <h3>Kenapa 1, 2, dan 5 Bukan Segitiga?</h3>
+                        <div style="display: flex; gap: 20px; margin-top: 15px; flex-wrap: wrap;">
+                            <div class="glass-card" style="flex: 1; min-width: 250px; border-color: var(--danger);">
+                                <div style="display: flex; align-items: center; gap: 10px; height: 50px;">
+                                    <div style="width: 20px; height: 4px; background: var(--danger);"></div>
+                                    <div style="width: 40px; height: 4px; background: var(--danger);"></div>
+                                    <div style="width: 100px; height: 4px; background: var(--success);"></div>
+                                </div>
+                                <p style="margin-top: 10px; font-size: 0.85rem;">Sisi 1 dan 2 terlalu pendek untuk "menjangkau" satu sama lain di atas sisi 5. <br><b>1 + 2 < 5</b> (Gagal!)</p>
+                            </div>
+                            <div class="glass-card" style="flex: 1; min-width: 250px; border-color: var(--success);">
+                                <div style="display: flex; align-items: center; gap: 10px; height: 50px; position: relative;">
+                                    <div style="width: 60px; height: 4px; background: var(--success); transform: rotate(-45deg); transform-origin: left; position: absolute; left: 0; bottom: 10px;"></div>
+                                    <div style="width: 60px; height: 4px; background: var(--success); transform: rotate(45deg); transform-origin: right; position: absolute; right: 20px; bottom: 10px;"></div>
+                                    <div style="width: 80px; height: 4px; background: var(--success); position: absolute; left: 0; bottom: 10px;"></div>
+                                </div>
+                                <p style="margin-top: 10px; font-size: 0.85rem;">Sisi 6, 6, 8. Sisi-sisi pendek cukup panjang untuk bertemu di tengah. <br><b>6 + 6 > 8</b> (Berhasil!)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn ripple-btn" onclick="navigateTo('simulasi')">Uji Pemahamanmu di Simulasi ➡️</button>
+                    </div>
+                </div>
+            </div>`;
+
+            /* --- SIMULASI ANALISIS --- */
+            html += `
+            <div id="sec-simulasi" class="section">
+                <h1>Simulasi Analisis 🧠</h1>
+                
+                <div class="glass-card" style="background: rgba(37, 99, 235, 0.05); border-color: var(--primary);">
+                    <h3 style="color: var(--primary);">💡 Cara Berpikir Seorang Programmer</h3>
+                    <p style="font-size: 0.95rem;">Sebelum menulis kode, kita harus melatih logika. Gunakan langkah-langkah ini untuk menjawab soal di bawah:</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; border: 1px solid var(--glass-border);">
+                            <span style="color: var(--secondary); font-weight: bold;">Langkah 1:</span><br>
+                            Cek apakah angka-angka tersebut <b>Valid</b> (Teorema Segitiga).
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; border: 1px solid var(--glass-border);">
+                            <span style="color: var(--accent); font-weight: bold;">Langkah 2:</span><br>
+                            Jika Valid, bandingkan panjang sisi untuk menentukan <b>Jenisnya</b>.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <p>Uji kemampuan analisismu dengan skenario berikut:</p>
+                    
+                    <div class="sim-question-box" style="margin-bottom: 25px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: 600;">1. Apa syarat mutlak agar a, b, dan c bisa membentuk segitiga?</label>
+                        <select id="sim-q1" style="margin-bottom: 5px;">
+                            <option value="">-- Pilih Jawaban --</option>
+                            <option value="salah">Sisi a harus sama dengan sisi b</option>
+                            <option value="benar">Setiap jumlah dua sisi harus lebih besar dari sisi lainnya</option>
+                            <option value="salah">Salah satu sisi harus bernilai 90</option>
+                        </select>
+                        <div id="fb-q1" style="font-size: 0.85rem; min-height: 20px;"></div>
+                    </div>
+                    
+                    <div class="sim-question-box" style="margin-bottom: 25px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: 600;">2. Input: <strong>a=5, b=5, c=8</strong>. Analisis:</label>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+                            Cek: (5+5 > 8?) <b>Ya</b>. (5+8 > 5?) <b>Ya</b>. Karena valid dan ada <b>dua sisi sama (5 dan 5)</b>, maka...
+                        </p>
+                        <select id="sim-q2" style="margin-bottom: 5px;">
+                            <option value="">-- Pilih Jawaban --</option>
+                            <option value="salah">Segitiga Sama Sisi</option>
+                            <option value="benar">Segitiga Sama Kaki</option>
+                            <option value="salah">Segitiga Sembarang</option>
+                        </select>
+                        <div id="fb-q2" style="font-size: 0.85rem; min-height: 20px;"></div>
+                    </div>
+
+                    <div class="sim-question-box" style="margin-bottom: 25px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: 600;">3. Input: <strong>a=1, b=2, c=5</strong>. Kenapa ini bukan segitiga?</label>
+                        <select id="sim-q3" style="margin-bottom: 5px;">
+                            <option value="">-- Pilih Jawaban --</option>
+                            <option value="salah">Karena angkanya terlalu kecil</option>
+                            <option value="benar">Karena 1 + 2 tidak lebih besar dari 5</option>
+                            <option value="salah">Karena tidak ada angka yang sama</option>
+                        </select>
+                        <div id="fb-q3" style="font-size: 0.85rem; min-height: 20px;"></div>
+                    </div>
+
+                    <button class="btn ripple-btn" onclick="cekSimulasi()" style="width:100%; margin-top:10px;">Verifikasi Analisis 🔍</button>
+                    <div id="sim-result" style="margin-top:20px; font-weight:bold; text-align:center; font-size:1.2rem;"></div>
+                </div>
+            </div>`;
+
+            /* --- FLOWCHART BUILDER --- */
+            html += `
+            <div id="sec-flowchart" class="section">
+                <h1>Flowchart Builder 🔀</h1>
+                <p>Klik blok di bawah secara berurutan untuk menyusun logika <strong>Flowchart Identifikasi Segitiga</strong>.</p>
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <h3>Blok Tersedia (Klik untuk tambah)</h3>
+                        <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
+                            <div class="draggable-item" onclick="addFlowchart('Mulai', 'oval')">🟢 Mulai (Oval)</div>
+                            <div class="draggable-item" onclick="addFlowchart('Input a, b, c', 'jajar')" style="background:var(--secondary)">📥 Input a, b, c (Jajar Genjang)</div>
+                            <div class="draggable-item" onclick="addFlowchart('Cek Syarat Segitiga (a+b>c...)', 'belah')" style="background:var(--accent)">❓ Cek Syarat Segitiga (Belah Ketupat)</div>
+                            <div class="draggable-item" onclick="addFlowchart('Cek Sama Sisi / Kaki', 'belah')" style="background:var(--accent)">❓ Cek Sama Sisi / Kaki (Belah Ketupat)</div>
+                            <div class="draggable-item" onclick="addFlowchart('Cetak Output Sesuai', 'jajar')" style="background:var(--secondary)">📤 Cetak Output (Jajar Genjang)</div>
+                            <div class="draggable-item" onclick="addFlowchart('Selesai', 'oval')">🔴 Selesai (Oval)</div>
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <h3>Flowchart Kamu</h3>
+                        <div id="fc-workspace" class="builder-area">
+                            <p style="color:var(--text-muted); text-align:center; margin-top:50px;">Area Kosong</p>
+                        </div>
+                        <button class="btn ripple-btn" style="width:100%; margin-top:15px;" onclick="cekFlowchart()">Verifikasi Flowchart</button>
+                    </div>
+                </div>
+            </div>`;
+
+            /* --- PSEUDOCODE BUILDER --- */
+            html += `
+            <div id="sec-pseudocode" class="section">
+                <h1>Pseudocode 📝</h1>
+                <div class="glass-card">
+                    <p>Pseudocode adalah representasi algoritma menggunakan bahasa yang mirip bahasa manusia. Tujuannya agar logika program mudah dibaca sebelum diketik di komputer.</p>
+                    
+                    <div class="grid-2" style="margin-top: 20px; align-items: start;">
+                        <div style="background: #1a1a1a; padding:20px; border-radius:12px; border:1px solid var(--glass-border); overflow-x:auto;">
+                            <code style="line-height:1.8; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #e2e8f0;">
+                                <span style="color: #f472b6;">ALGORITMA</span> CekSegitiga<br>
+                                <span style="color: #60a5fa;">DEKLARASI:</span><br>
+                                &nbsp;&nbsp;a, b, c : integer<br>
+                                <span style="color: #60a5fa;">DESKRIPSI:</span><br>
+                                &nbsp;&nbsp;<span style="color: #fbbf24;">read</span>(a, b, c)<br>
+                                &nbsp;&nbsp;<span style="color: #f472b6;">if</span> (a+b > c) <span style="color: #34d399;">and</span> (a+c > b) <span style="color: #34d399;">and</span> (b+c > a) <span style="color: #f472b6;">then</span><br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #f472b6;">if</span> (a == b) <span style="color: #34d399;">and</span> (b == c) <span style="color: #f472b6;">then</span><br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #fbbf24;">print</span>("Segitiga Sama Sisi")<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #f472b6;">else if</span> (a == b) <span style="color: #34d399;">or</span> (a == c) <span style="color: #34d399;">or</span> (b == c) <span style="color: #f472b6;">then</span><br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #fbbf24;">print</span>("Segitiga Sama Kaki")<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #f472b6;">else</span><br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #fbbf24;">print</span>("Segitiga Sembarang")<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #f472b6;">end if</span><br>
+                                &nbsp;&nbsp;<span style="color: #f472b6;">else</span><br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #fbbf24;">print</span>("Bukan Segitiga")<br>
+                                &nbsp;&nbsp;<span style="color: #f472b6;">end if</span>
+                            </code>
+                        </div>
+
+                        <div class="glass-card" style="margin-bottom: 0; background: rgba(255,255,255,0.02);">
+                            <h3 style="color: var(--secondary); font-size: 1rem;">🔍 Bedah Anatomi Kode:</h3>
+                            <div style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+                                <p>📌 <b>ALGORITMA:</b> Nama identitas dari program yang kita buat.</p>
+                                <p>📌 <b>DEKLARASI:</b> Bagian untuk mengenalkan variabel (sisi a, b, c) dan tipe datanya (integer/angka bulat).</p>
+                                <p>📌 <b>DESKRIPSI:</b> Bagian utama yang berisi langkah-langkah logika (algoritma).</p>
+                                <p>📌 <b>read:</b> Perintah untuk mengambil input dari pengguna.</p>
+                                <p>📌 <b>if - then - else:</b> Struktur "Jika - Maka - Selain itu". Inilah cara komputer mengambil keputusan.</p>
+                                <p>📌 <b>and / or:</b> Operator logika. <b>And</b> berarti semua syarat wajib terpenuhi. <b>Or</b> berarti salah satu saja terpenuhi sudah cukup.</p>
+                                <p>📌 <b>print:</b> Perintah untuk menampilkan hasil ke layar.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 25px; padding: 15px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 12px;">
+                        <p style="font-size: 0.9rem; margin-bottom: 0; color: #fbbf24;">💡 <b>Tips:</b> Perhatikan lekukan (indentasi) pada baris kode. Lekukan membantu kita melihat <code>if</code> mana yang memiliki <code>end if</code> sebagai pasangannya.</p>
+                    </div>
+                </div>
+                <div style="text-align: right; margin-top: 20px;">
+                    <button class="btn ripple-btn" onclick="navigateTo('coding')">Mulai Coding di Lab 🚀</button>
+                </div>
+            </div>`;
+
+            /* --- CODING LAB --- */
+            html += `
+            <div id="sec-coding" class="section">
+                <h1>Coding Lab 💻</h1>
+                <p>Saatnya menerjemahkan Pseudocode ke dalam bahasa <strong>JavaScript</strong> sesungguhnya!</p>
+                <div class="editor-container">
+                    <div class="editor">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">index.js</div>
+                        <textarea id="code-editor" spellcheck="false">
+function cekSegitiga(a, b, c) {
+    // Tulis kodemu di sini
+    if(a+b>c && a+c>b && b+c>a) {
+        if(a===b && b===c) {
+            return "Segitiga Sama Sisi";
+        } else if(a===b || a===c || b===c) {
+            return "Segitiga Sama Kaki";
+        } else {
+            return "Segitiga Sembarang";
+        }
+    } else {
+        return "Bukan Segitiga";
+    }
+}
+
+// Menjalankan fungsi dengan argumen
+console.log("Test 1:", cekSegitiga(7,7,7));
+console.log("Test 2:", cekSegitiga(3,4,5));
+console.log("Test 3:", cekSegitiga(5,7,15));
+</textarea>
+                    </div>
+                    <div class="console">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">Terminal Console</div>
+                        <div id="code-console"></div>
+                    </div>
+                </div>
+                <div style="margin-top:15px; display:flex; gap:10px;">
+                    <button class="btn ripple-btn" onclick="runCode()">▶️ Jalankan Kode (Run)</button>
+                    <button class="btn" style="background:var(--danger)" onclick="document.getElementById('code-console').innerHTML=''">🗑️ Clear Console</button>
+                </div>
+            </div>`;
+
+            /* --- SIMULATOR PROGRAM & VISUALISASI --- */
+            html += `
+            <div id="sec-simulator" class="section">
+                <h1>Simulator Program ▶️</h1>
+                <p>Coba gunakan program yang telah dibuat secara visual.</p>
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <h3>Input Data (Sisi Segitiga)</h3>
+                        <label>Sisi A</label>
+                        <input type="number" id="sim-a" value="5">
+                        <label>Sisi B</label>
+                        <input type="number" id="sim-b" value="5">
+                        <label>Sisi C</label>
+                        <input type="number" id="sim-c" value="5">
+                        <button class="btn ripple-btn" onclick="jalankanSimulator()" style="width:100%; margin-top:10px;">Jalankan Program</button>
+                        
+                        <div style="margin-top:20px; padding:15px; background:rgba(0,0,0,0.3); border-radius:8px;">
+                            Output: <h2 id="sim-hasil" style="color:var(--accent); margin-top:5px;">-</h2>
+                        </div>
+                    </div>
+                    <div class="glass-card text-center">
+                        <h3>Visualisasi Output</h3>
+                        <div class="triangle-box">
+                            <div id="sim-triangle" class="triangle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+            /* --- TESTING LAB --- */
+            html += `
+            <div id="sec-testing" class="section">
+                <h1>Testing Lab 🧪 (Black Box Testing)</h1>
+                <div class="glass-card">
+                    <p>Programmer wajib menguji programnya dengan tabel <strong>Test Case</strong>.</p>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; text-align:left; border-collapse:collapse; background:rgba(0,0,0,0.2);">
+                            <tr style="border-bottom:1px solid var(--glass-border); background:var(--glass-bg);">
+                                <th style="padding:15px">ID</th><th style="padding:15px">Input (a,b,c)</th><th>Expected Output</th><th>Actual Output</th><th>Status</th>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05)"><td style="padding:15px">TC-1</td><td>7, 7, 7</td><td>Segitiga Sama Sisi</td><td id="t-a1">-</td><td id="t-s1">-</td></tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05)"><td style="padding:15px">TC-2</td><td>6, 6, 10</td><td>Segitiga Sama Kaki</td><td id="t-a2">-</td><td id="t-s2">-</td></tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05)"><td style="padding:15px">TC-3</td><td>5, 7, 15</td><td>Bukan Segitiga</td><td id="t-a3">-</td><td id="t-s3">-</td></tr>
+                            <tr><td style="padding:15px">TC-4</td><td>4, 9, 12</td><td>Segitiga Sembarang</td><td id="t-a4">-</td><td id="t-s4">-</td></tr>
+                        </table>
+                    </div>
+                    <button class="btn ripple-btn" style="margin-top:20px" onclick="runTests()">Jalankan Auto-Test</button>
+                </div>
+            </div>`;
+
+            /* --- DEBUGGING GAME --- */
+            html += `
+            <div id="sec-debug" class="section">
+                <h1>Debugging Game 🐛</h1>
+                
+                <div class="glass-card" style="margin-bottom: 20px; background: rgba(6, 182, 212, 0.1); border-color: var(--secondary);">
+                    <h3 style="color: var(--secondary); font-size: 1rem; margin-bottom: 10px;">💡 Catatan Programmer: Operator Matematika</h3>
+                    <p style="font-size: 0.9rem; margin-bottom: 0;">Di dalam bahasa pemrograman (seperti JavaScript), simbol matematika sedikit berbeda dengan yang biasa kita tulis di buku pelajaran:</p>
+                    <ul style="font-size: 0.9rem; margin-left: 20px; color: var(--text-muted); margin-top: 5px; list-style-type: disc;">
+                        <li>Penjumlahan menggunakan <code>+</code></li>
+                        <li>Pengurangan menggunakan <code>-</code></li>
+                        <li>Perkalian menggunakan <code>*</code> (asterisk / bintang, bukan tanda silang atau x)</li>
+                        <li>Pembagian menggunakan <code>/</code> (garis miring)</li>
+                    </ul>
+                </div>
+
+                <div class="glass-card">
+                    <p><strong>Bug</strong> adalah kesalahan logika/syntax dalam program. <strong>Debugging</strong> adalah proses mencarinya.</p>
+                    <div style="margin:20px 0; padding:15px; border-left:4px solid var(--danger); background:rgba(239, 68, 68, 0.1);">
+                        <strong>Misi:</strong> Program penghitung Luas Persegi Panjang di bawah ini menghasilkan angka yang salah. Temukan operator yang salah!
+                    </div>
+                    <pre style="background:#1e1e1e; padding:20px; border-radius:8px; font-family:monospace;">
+function hitungLuas(panjang, lebar) {
+    // Seharusnya Luas = Panjang dikali Lebar
+    let luas = panjang + lebar; 
+    return luas;
+}
+                    </pre>
+                    <label style="display:block; margin-top:20px;">Ganti operator <code style="color:var(--danger)">+</code> menjadi operator perkalian yang benar di JavaScript:</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="debug-ans" placeholder="Ketik operator (misal: x atau * atau /)" style="width:200px; margin-bottom:0;">
+                        <button class="btn ripple-btn" onclick="cekDebug()">Fix Code!</button>
+                    </div>
+                </div>
+            </div>`;
+
+            /* --- QUIZ --- */
+            html += `
+            <div id="sec-quiz" class="section">
+                <h1>Quiz Interaktif ❓</h1>
+                <div class="glass-card" id="quiz-container">
+                    <!-- Quiz Injected Here -->
+                </div>
+            </div>`;
+
+            /* --- MINI PROJECT --- */
+            html += `
+            <div id="sec-project" class="section">
+                <h1>Mini Project 🛠️</h1>
+                <p>Pilih project untuk melatih insting logikamu.</p>
+                <div class="grid-3">
+                    <div class="glass-card text-center cursor-pointer" onclick="showToast('Project ini terkunci di versi Demo!')">
+                        <div style="font-size:3rem; margin-bottom:10px;">🌡️</div>
+                        <h3>Kalkulator Suhu</h3>
+                        <p>Konversi Celcius ke Fahrenheit</p>
+                        <div class="badge">Belum Tersedia</div>
+                    </div>
+                    <div class="glass-card text-center cursor-pointer" onclick="showToast('Project ini terkunci di versi Demo!')">
+                        <div style="font-size:3rem; margin-bottom:10px;">🛒</div>
+                        <h3>Diskon Belanja</h3>
+                        <p>Hitung total harga setelah diskon</p>
+                        <div class="badge">Belum Tersedia</div>
+                    </div>
+                    <div class="glass-card text-center cursor-pointer" style="border-color:var(--accent)" onclick="showToast('Selesaikan semua Quiz dan Testing untuk unlock!')">
+                        <div style="font-size:3rem; margin-bottom:10px;">📐</div>
+                        <h3>Program Segitiga</h3>
+                        <p>Build ulang dari awal!</p>
+                        <div class="badge earned">Materi Utama</div>
+                    </div>
+                </div>
+            </div>`;
+
+            /* --- SERTIFIKAT --- */
+            html += `
+            <div id="sec-sertifikat" class="section">
+                <h1>Sertifikat Kelulusan 🎓</h1>
+                <div class="glass-card text-center" id="cert-area">
+                    <div style="font-size:4rem; margin-bottom:20px;">🔒</div>
+                    <h2>Sertifikat Terkunci</h2>
+                    <p>Selesaikan semua materi dan capai XP minimal 80 untuk mencetak sertifikat.</p>
+                </div>
+            </div>`;
+
+            container.innerHTML = html;
+        }
+
+        // --- 4. APPLICATION LOGIC & INTERACTIVITY ---
+
+        function updateDashboard() {
+            badgesDef.forEach(b => {
+                const el = document.getElementById(`badge-${b.id}`);
+                if(el) {
+                    if(state.badges.includes(b.id)) el.classList.add('earned');
+                    else el.classList.remove('earned');
+                }
+            });
+            document.getElementById('dash-score').innerText = state.score;
+            document.getElementById('dash-prog-text').innerText = `${state.progress}%`;
+            document.getElementById('dash-prog-fill').style.width = `${state.progress}%`;
+        }
+
+        // Timeline (SDLC)
+        function animateTimeline() {
+            let delay = 0;
+            [1,2,3,4].forEach(i => {
+                setTimeout(() => {
+                    const el = document.getElementById(`ts${i}`);
+                    if(el) el.classList.add('visible');
+                }, delay);
+                delay += 800;
+            });
+            showToast("Memutar animasi siklus...");
+        }
+
+        // Simulasi Analisis
+        function cekSimulasi() {
+            const q1 = document.getElementById('sim-q1').value;
+            const q2 = document.getElementById('sim-q2').value;
+            const q3 = document.getElementById('sim-q3').value;
+            const res = document.getElementById('sim-result');
+            
+            const fb1 = document.getElementById('fb-q1');
+            const fb2 = document.getElementById('fb-q2');
+            const fb3 = document.getElementById('fb-q3');
+            
+            if(!q1 || !q2 || !q3) {
+                showToast("Jawab semua pertanyaan terlebih dahulu!", true);
+                return;
+            }
+
+            // Individual Feedback
+            fb1.innerHTML = q1 === 'benar' ? "✅ Tepat! Ini adalah Teorema Pertidaksamaan Segitiga." : "❌ Kurang tepat. Ingat aturan jumlah dua sisi.";
+            fb1.style.color = q1 === 'benar' ? "var(--success)" : "var(--danger)";
+            
+            fb2.innerHTML = q2 === 'benar' ? "✅ Benar! Karena ada 2 sisi yang identik." : "❌ Salah. Perhatikan jumlah sisi yang sama.";
+            fb2.style.color = q2 === 'benar' ? "var(--success)" : "var(--danger)";
+            
+            fb3.innerHTML = q3 === 'benar' ? "✅ Tepat! 1+2 = 3, dan 3 tidak lebih besar dari 5." : "❌ Salah. Coba jumlahkan sisi terpendeknya.";
+            fb3.style.color = q3 === 'benar' ? "var(--success)" : "var(--danger)";
+
+            if(q1 === 'benar' && q2 === 'benar' && q3 === 'benar') {
+                res.innerHTML = "🎉 Luar biasa! Logika analisismu sudah benar.";
+                res.style.color = "var(--success)";
+                if(!state.badges.includes('logic')) {
+                    state.score += 20;
+                    awardBadge('logic');
+                }
+            } else {
+                res.innerHTML = "⚠️ Beberapa jawaban masih salah. Pelajari lagi langkahnya.";
+                res.style.color = "var(--danger)";
+            }
+        }
+
+        // Flowchart Builder Array
+        let fcSteps = [];
+        const fcDict = {
+            'oval': 'border-radius: 50px; background: var(--primary);',
+            'jajar': 'transform: skew(-20deg); background: var(--secondary); padding: 10px 30px;',
+            'belah': 'background: var(--accent); clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); padding: 20px 10px;'
+        };
+
+        function addFlowchart(text, type) {
+            fcSteps.push({text, type});
+            renderFlowchart();
+        }
+
+        function renderFlowchart() {
+            const area = document.getElementById('fc-workspace');
+            if(fcSteps.length === 0) {
+                area.innerHTML = `<p style="color:var(--text-muted); text-align:center; margin-top:50px;">Area Kosong</p>`;
+                return;
+            }
+            
+            area.innerHTML = fcSteps.map((s, i) => {
+                let innerStyle = s.type === 'jajar' ? 'transform: skew(20deg);' : '';
+                return `
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div style="${fcDict[s.type]} width: 80%; max-width: 250px; color:white; text-align:center; font-weight:bold; position:relative;">
+                        <div style="${innerStyle}">${s.text}</div>
+                        <span style="cursor:pointer; color:rgba(255,255,255,0.7); position:absolute; right:10px; top:10px; font-size:0.8rem;" onclick="removeFlowchart(${i})">✖</span>
+                    </div>
+                    ${i < fcSteps.length - 1 ? '<div style="margin: 5px 0; color:var(--text-muted)">⬇️</div>' : ''}
+                </div>
+                `;
+            }).join('');
+        }
+
+        function removeFlowchart(index) {
+            fcSteps.splice(index, 1);
+            renderFlowchart();
+        }
+
+        function cekFlowchart() {
+            if(fcSteps.length >= 4 && fcSteps[0].text.includes('Mulai') && fcSteps[fcSteps.length-1].text.includes('Selesai')) {
+                showToast("✅ Susunan Flowchart Logis!");
+                if(!state.badges.includes('flowchart')) { 
+                    state.score += 20; 
+                    awardBadge('flowchart'); 
+                }
+            } else {
+                showToast("❌ Susunan belum tepat. Harus diawali Mulai dan diakhiri Selesai.", true);
+            }
+        }
+
+        // Coding Lab / JS Runner
+        function runCode() {
+            const code = document.getElementById('code-editor').value;
+            const cons = document.getElementById('code-console');
+            cons.innerHTML = ''; // Clear prev
+            
+            // Intercept console.log
+            const oldLog = console.log;
+            console.log = function(...args) {
+                cons.innerHTML += `<div style="margin-bottom:5px">> ${args.join(' ')}</div>`;
+                oldLog.apply(console, args);
+            };
+            
+            try {
+                // Execute code string
+                new Function(code)();
+                if(!state.badges.includes('coding')) { 
+                    state.score += 20; 
+                    awardBadge('coding'); 
+                }
+                showToast("Kode berhasil dieksekusi!");
+            } catch(e) {
+                cons.innerHTML += `<div style="color:var(--danger)">TypeError/SyntaxError: ${e.message}</div>`;
+                showToast("Terdapat Error pada Kodemu!", true);
+            }
+            
+            console.log = oldLog; // Restore normal logging
+        }
+
+        // Simulator Program & DOM Manipulation Visual
+        function jalankanSimulator() {
+            const a = parseFloat(document.getElementById('sim-a').value);
+            const b = parseFloat(document.getElementById('sim-b').value);
+            const c = parseFloat(document.getElementById('sim-c').value);
+            const hasilText = document.getElementById('sim-hasil');
+            const tri = document.getElementById('sim-triangle');
+            
+            if(!a || !b || !c) {
+                showToast("Masukkan semua nilai sisi!", true); return;
+            }
+
+            // Logic Program
+            let hasil = "";
+            if(a+b>c && a+c>b && b+c>a) {
+                if(a===b && b===c) hasil = "Segitiga Sama Sisi";
+                else if(a===b || a===c || b===c) hasil = "Segitiga Sama Kaki";
+                else hasil = "Segitiga Sembarang";
+                
+                // Visualisasi DOM
+                tri.style.borderBottom = `100px solid var(--secondary)`;
+                tri.style.borderLeft = `50px solid transparent`;
+                tri.style.borderRight = `50px solid transparent`;
+                tri.style.transform = (hasil === "Segitiga Sama Sisi") ? "scale(1.2)" : (hasil === "Segitiga Sembarang") ? "skew(10deg)" : "scale(1)";
+                
+            } else {
+                hasil = "Bukan Segitiga";
+                tri.style.borderBottom = "10px solid var(--danger)";
+                tri.style.borderLeft = "10px solid transparent";
+                tri.style.borderRight = "10px solid transparent";
+                tri.style.transform = "scale(1)";
+            }
+            
+            hasilText.innerText = hasil;
+        }
+
+        // Testing Lab (Black Box Auto Runner)
+        function runTests() {
+            // Internal True Function for Testing
+            const testFunc = (a,b,c) => {
+                if(a+b>c && a+c>b && b+c>a) {
+                    if(a===b && b===c) return "Segitiga Sama Sisi";
+                    if(a===b || a===c || b===c) return "Segitiga Sama Kaki";
+                    return "Segitiga Sembarang";
+                }
+                return "Bukan Segitiga";
+            };
+            
+            const cases = [
+                { id:1, arg:[7,7,7], exp:"Segitiga Sama Sisi" },
+                { id:2, arg:[6,6,10], exp:"Segitiga Sama Kaki" },
+                { id:3, arg:[5,7,15], exp:"Bukan Segitiga" },
+                { id:4, arg:[4,9,12], exp:"Segitiga Sembarang" }
+            ];
+
+            let passedAll = true;
+
+            cases.forEach((c, index) => {
+                setTimeout(() => {
+                    const act = testFunc(...c.arg);
+                    document.getElementById(`t-a${c.id}`).innerText = act;
+                    const statusEl = document.getElementById(`t-s${c.id}`);
+                    
+                    if(act === c.exp) {
+                        statusEl.innerText = "✅ PASS";
+                        statusEl.style.color = "var(--success)";
+                    } else {
+                        statusEl.innerText = "❌ FAIL";
+                        statusEl.style.color = "var(--danger)";
+                        passedAll = false;
+                    }
+
+                    if(index === cases.length -1) {
+                        showToast(passedAll ? "Semua Test Case Berhasil!" : "Ada Test Case yang Gagal", !passedAll);
+                    }
+                }, index * 300); // Staggered animation
+            });
+        }
+
+        // Debugging Game
+        function cekDebug() {
+            const ans = document.getElementById('debug-ans').value.trim();
+            if(ans === '*') {
+                showToast("✅ Tepat sekali! Operator perkalian di pemrograman adalah asterisk (*)");
+                if(!state.badges.includes('debug')) { 
+                    state.score += 20; 
+                    awardBadge('debug'); 
+                }
+            } else {
+                showToast("❌ Salah. Hint: Gunakan simbol asterisk.", true);
+            }
+        }
+
+        // Quiz Engine
+        const quizData = [
+            { q: "Apa langkah pertama dalam siklus membuat program?", a: ["Mengetik Kode", "Menganalisis Masalah", "Melakukan Testing"], ans: 1 },
+            { q: "Representasi algoritma yang menyerupai bahasa pemrograman sungguhan disebut?", a: ["Pseudocode", "Flowchart", "Variabel"], ans: 0 },
+            { q: "Proses menguji program dan mencari kesalahan (bug) disebut?", a: ["Compiling", "Executing", "Debugging"], ans: 2 },
+            { q: "Bentuk Oval dalam Flowchart melambangkan?", a: ["Input Data", "Proses Matematika", "Mulai / Selesai"], ans: 2 }
+        ];
+        
+        function renderQuiz() {
+            const cont = document.getElementById('quiz-container');
+            if(!cont) return;
+
+            let html = quizData.map((item, i) => `
+                <div style="margin-bottom:25px; padding:15px; background:rgba(0,0,0,0.2); border-radius:8px;">
+                    <p style="font-size:1.1rem; margin-bottom:10px;"><strong>${i+1}. ${item.q}</strong></p>
+                    ${item.a.map((opt, j) => `
+                        <label style="display:flex; align-items:center; margin:8px 0; cursor:pointer;">
+                            <input type="radio" name="q${i}" value="${j}" style="width:20px; height:20px; margin-right:10px; margin-bottom:0;"> ${opt}
+                        </label>
+                    `).join('')}
+                </div>
+            `).join('');
+            
+            html += `
+            <button class="btn ripple-btn" style="width:100%; font-size:1.1rem;" onclick="cekQuiz()">Kumpulkan & Cek Nilai</button>
+            <div id="quiz-result" style="margin-top:20px; text-align:center; font-size:1.5rem; font-weight:bold;"></div>
+            `;
+            cont.innerHTML = html;
+        }
+
+        // Initialize quiz after short delay to ensure DOM is ready
+        setTimeout(renderQuiz, 500);
+
+        function cekQuiz() {
+            let score = 0;
+            quizData.forEach((item, i) => {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                if(selected && parseInt(selected.value) === item.ans) score++;
+            });
+            
+            const resEl = document.getElementById('quiz-result');
+            resEl.innerText = `Skor Quiz: ${score} / ${quizData.length}`;
+            
+            if(score === quizData.length) {
+                resEl.style.color = "var(--success)";
+                if(!state.badges.includes('pemula')) { // Just giving an extra chance for points
+                    state.score += 20;
+                }
+                showToast("Sempurna! Kamu memahami konsep dasar.");
+                fireConfetti();
+            } else {
+                resEl.style.color = "var(--danger)";
+                showToast("Masih ada yang salah, pelajari materi lagi ya.", true);
+            }
+            updateDashboard();
+        }
+
+        // Sertifikat Generator (Printable View)
+        function checkSertifikat() {
+            const area = document.getElementById('cert-area');
+            if(state.progress >= 80 && state.score >= 60) {
+                const name = prompt("Selamat! Anda memenuhi syarat kelulusan.\nMasukkan Nama Lengkap Anda untuk di Sertifikat:", "Siswa Hebat");
+                if(name) {
+                    area.innerHTML = `
+                        <div id="print-area" style="border: 10px solid var(--primary); padding: 50px; background: white; color: black; border-radius: 10px; box-shadow: 0 0 30px rgba(255,255,255,0.2);">
+                            <div style="font-size:3rem; margin-bottom:10px;">🏆</div>
+                            <h1 style="color:var(--bg); font-family:serif; letter-spacing: 2px;">SERTIFIKAT KELULUSAN</h1>
+                            <p style="color:#555; font-size:1.2rem; margin: 20px 0;">Diberikan dengan bangga kepada:</p>
+                            <h2 style="font-size:3rem; color:var(--primary); margin: 30px 0; border-bottom: 2px solid var(--secondary); padding-bottom: 10px; display:inline-block;">${name}</h2>
+                            <p style="color:#333; font-size:1.2rem; max-width:600px; margin: 0 auto;">Telah berhasil menyelesaikan pembelajaran interaktif <strong>"Programming Lab XI - Proses Pemrograman"</strong> dengan predikat Sangat Baik.</p>
+                            
+                            <div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;">
+                                <div>
+                                    <p style="font-weight:bold; color:var(--bg)">XP Point</p>
+                                    <h3 style="color:var(--accent)">${state.score} XP</h3>
+                                </div>
+                                <div>
+                                    <p style="color:var(--bg); margin-bottom:10px;">Instruktur Pemrograman</p>
+                                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50'><path d='M10,25 Q30,10 50,25 T90,25' fill='none' stroke='black' stroke-width='3'/></svg>" height="40">
+                                    <p style="font-weight:bold; border-top:1px solid #333; padding-top:5px;">System AI</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn ripple-btn" style="margin-top:30px; font-size:1.2rem;" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+                    `;
+                    fireConfetti();
+                }
+            }
+        }
+
+        // --- 5. VISUAL EFFECTS CORE ---
+        
+        function addRippleEffect() {
+            document.addEventListener('click', function(e) {
+                if(e.target.classList.contains('ripple-btn')) {
+                    let btn = e.target;
+                    let ripple = document.createElement('span');
+                    ripple.classList.add('ripple');
+                    
+                    let rect = btn.getBoundingClientRect();
+                    ripple.style.left = `${e.clientX - rect.left - 25}px`;
+                    ripple.style.top = `${e.clientY - rect.top - 25}px`;
+                    ripple.style.width = ripple.style.height = '50px';
+                    
+                    btn.appendChild(ripple);
+                    setTimeout(() => ripple.remove(), 600);
+                }
+            });
+        }
+
+        function fireConfetti() {
+            for(let i=0; i<60; i++) {
+                let conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = '-20px';
+                conf.style.background = ['var(--primary)', 'var(--secondary)', 'var(--accent)', '#ffffff'][Math.floor(Math.random()*4)];
+                document.body.appendChild(conf);
+                
+                let fallSpeed = Math.random() * 3 + 2;
+                let rotate = Math.random() * 360;
+                
+                let anim = setInterval(() => {
+                    let top = parseFloat(conf.style.top) || -20;
+                    if(top > window.innerHeight) {
+                        clearInterval(anim); conf.remove();
+                    } else {
+                        conf.style.top = (top + fallSpeed) + 'px';
+                        rotate += 5;
+                        conf.style.transform = `rotate(${rotate}deg)`;
+                    }
+                }, 20);
+            }
+        }
+
+        // Lightweight Canvas Particle Background
+        function setupParticles() {
+            const canvas = document.getElementById('particles');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const p = [];
+            for(let i=0; i<50; i++) {
+                p.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    r: Math.random() * 2,
+                    dx: (Math.random() - 0.5) * 0.5,
+                    dy: (Math.random() - 0.5) * 0.5
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                p.forEach(dot => {
+                    ctx.beginPath();
+                    ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI*2);
+                    ctx.fill();
+                    dot.x += dot.dx; dot.y += dot.dy;
+                    // Bounce borders
+                    if(dot.x < 0 || dot.x > canvas.width) dot.dx *= -1;
+                    if(dot.y < 0 || dot.y > canvas.height) dot.dy *= -1;
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+            
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        }
+
+        // Style overrides for Print Mode
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @media print {
+                body * { visibility: hidden; }
+                #print-area, #print-area * { visibility: visible; }
+                #print-area { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: none; }
+                .sidebar, .btn { display: none !important; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Boot the App
+        window.onload = initApp;
+    </script>
+</body>
+</html>
